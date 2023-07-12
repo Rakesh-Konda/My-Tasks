@@ -4,173 +4,212 @@ import './index.css'
 
 const tagsList = [
   {
-    optionId: 'HEALTH',
-    displayText: 'Health',
+    Id: v4(),
+    displayText: 'Engineer',
   },
   {
-    optionId: 'EDUCATION',
-    displayText: 'Education',
+    Id: v4(),
+    displayText: 'Doctor',
   },
   {
-    optionId: 'ENTERTAINMENT',
-    displayText: 'Entertainment',
+    Id: v4(),
+    displayText: 'Scientist',
   },
   {
-    optionId: 'SPORTS',
-    displayText: 'Sports',
-  },
-  {
-    optionId: 'TRAVEL',
-    displayText: 'Travel',
-  },
-  {
-    optionId: 'OTHERS',
-    displayText: 'Others',
+    Id: v4(),
+    displayText: 'Police Officer',
   },
 ]
 
 class ItemsList extends Component {
   state = {
-    task: '',
-    tag: tagsList[0].optionId,
-    TaskList: [],
     Tasks: [],
-    show: true,
-    tagValue: tagsList[0].optionId,
-    active: '',
+    showError: false,
+    name: '',
+    date: '',
+    goal: tagsList[0].displayText,
+    showHome: true,
+    showTasks: false,
   }
 
   componentDidMount() {
-    const {tagValue} = this.state
-    if (tagValue !== tagsList[0].optionId) {
-      this.setState({tagValue: tagsList[0].optionId})
+    console.log('t')
+    this.intervalId = setInterval(this.updateRemainingTime, 1000)
+  }
+
+  componentWillUnmount() {
+    clearInterval(this.intervalId)
+  }
+
+  updateRemainingTime = () => {
+    const {Tasks} = this.state
+    const updatedTasks = Tasks.map(task => {
+      const remainingTime = this.calculateRemainingTime(task.date)
+      return {...task, remainingTime}
+    })
+    this.setState({Tasks: updatedTasks})
+  }
+
+  padNumber = number => {
+    let a
+    return number.toString().padStart(2, '0')
+  }
+
+  calculateRemainingTime = taskDate => {
+    const now = new Date().getTime()
+    const selectedDate = new Date(taskDate).getTime()
+    const timeDiff = selectedDate - now
+
+    if (timeDiff < 0) {
+      return 'Expired'
+    }
+
+    const days = Math.floor(timeDiff / (1000 * 60 * 60 * 24))
+    const hours = Math.floor(
+      (timeDiff % (1000 * 60 * 60 * 24)) / (1000 * 60 * 60),
+    )
+    const minutes = Math.floor((timeDiff % (1000 * 60 * 60)) / (1000 * 60))
+    const seconds = Math.floor((timeDiff % (1000 * 60)) / 1000)
+
+    // return `${days} days ${hours} hours ${minutes} minutes ${seconds} seconds left`
+
+    const formattedTime = `${days}d, ${this.padNumber(hours)}:${this.padNumber(
+      minutes,
+    )}:${this.padNumber(seconds)}`
+    return formattedTime
+  }
+
+  Submit = event => {
+    event.preventDefault()
+    const {name, goal, date} = this.state
+    if (name === '' || goal === '' || date === '') {
+      this.setState({showError: true})
+    } else {
+      this.setState({showError: false})
+      this.setState(prevState => ({
+        Tasks: [...prevState.Tasks, {id: v4(), name, goal, date}],
+        name: '',
+        date: '',
+        goal: tagsList[0].displayText,
+      }))
     }
   }
 
-  task = event => {
-    this.setState({task: event.target.value})
+  Name = event => {
+    this.setState({name: event.target.value})
   }
 
-  Tag = event => {
-    this.setState({tag: event.target.value, tagValue: event.target.value})
+  Date = event => {
+    this.setState({date: event.target.value})
   }
 
-  Category = id => {
-    const {TaskList} = this.state
-    const UpData = TaskList.filter(each => each.tag === id)
-    console.log(UpData)
-    this.setState({Tasks: UpData, show: false, active: id})
+  Select = event => {
+    this.setState({goal: event.target.value})
   }
 
-  AddTaskBut = event => {
-    event.preventDefault()
-    const {task, tag} = this.state
-    const firstTagOptionId = tagsList[0].optionId
-    this.setState(
-      prevState => ({
-        TaskList: [...prevState.TaskList, {id: v4(), tag, task}],
-        tagValue: firstTagOptionId,
-        tag: firstTagOptionId,
-        task: '',
-      }),
-      () => {
-        document.getElementById('task').value = ''
-      },
-    )
+  ShowTask = () => {
+    const {Tasks} = this.state
+    console.log(Tasks)
+    this.setState({showHome: false, showTasks: true})
+  }
+
+  GoHome = () => {
+    this.setState({showHome: true, showTasks: false})
   }
 
   render() {
-    const {TaskList, show, Tasks, tagValue, active} = this.state
-    const isTaskThere = TaskList.length === 0
-    console.log(Tasks)
+    const {showError, name, goal, showHome, showTasks, Tasks, date} = this.state
+    const IsTasksThere = Tasks.length === 0
     return (
-      <div className="md">
-        <div className="divl">
-          <h1 className="h1">Create a Task!</h1>
-          <form onSubmit={this.AddTaskBut}>
-            <div className="dd">
-              <label className="t" htmlFor="task">
-                Task
+      <div className="divl">
+        <div className="divNav">
+          <div className="dd">
+            <p className="p" onClick={this.GoHome}>
+              Home
+            </p>
+            <p className="p" onClick={this.ShowTask}>
+              Tasks
+            </p>
+          </div>
+        </div>
+        {showHome && (
+          <form className="dab" onSubmit={this.Submit}>
+            <h1 className="pc">What you want to become in future ?</h1>
+            <div className="nam">
+              <label className="po" htmlFor="name">
+                Name
               </label>
               <input
-                onChange={this.task}
-                className="inp"
-                id="task"
+                onChange={this.Name}
                 type="text"
-                placeholder="Enter the task here"
+                value={name}
+                id="name"
+                placeholder="Your name"
+                className="inp"
               />
             </div>
-            <div className="dd">
-              <label className="t" htmlFor="tag">
-                Tags
+            <div className="nam">
+              <label className="po" htmlFor="date">
+                Date
+              </label>
+              <input
+                onChange={this.Date}
+                type="date"
+                value={date}
+                id="date"
+                className="inp"
+              />
+            </div>
+            <div className="nam">
+              <label className="po" htmlFor="goal">
+                Goal
               </label>
               <select
-                className="inp"
-                htmlFor="tag"
-                value={tagValue}
-                onChange={this.Tag}
+                id="goal"
+                className="select"
+                value={goal}
+                onChange={this.Select}
               >
                 {tagsList.map(each => (
-                  <option key={each.optionId} value={each.optionId}>
+                  <option key={each.Id} value={each.displayText}>
                     {each.displayText}
                   </option>
                 ))}
               </select>
             </div>
-            <button className="but" type="submit">
-              Add Task
+            <button type="submit" className="but">
+              Submit
             </button>
+            {showError && <p className="ep">Please fill all fields</p>}
           </form>
-        </div>
-        <div className="divl">
-          <h1 className="k">Tags</h1>
-          <ul className="ul">
-            {tagsList.map(each => (
-              <li key={each.optionId} className="lii">
-                <button
-                  className={`butTag ${
-                    active === each.optionId ? 'active' : ''
-                  }`}
-                  type="button"
-                  onClick={() => this.Category(each.optionId)}
-                >
-                  {each.displayText}
-                </button>
-              </li>
-            ))}
-          </ul>
-          <h1 className="k">Tasks</h1>
-          {isTaskThere ? (
-            <p className="k">No Tasks Added Yet</p>
-          ) : (
-            <div>
-              {show ? (
-                <ul>
-                  {TaskList.map(each => (
-                    <li key={each.id}>
-                      <div className="div">
-                        <p className="k">{each.task}</p>
-                        <p className="pp bb">{each.tag}</p>
-                      </div>
-                    </li>
-                  ))}
-                </ul>
-              ) : (
-                <ul>
+        )}
+        {showTasks && (
+          <div>
+            {IsTasksThere ? (
+              <div className="io">No Tasks were there!</div>
+            ) : (
+              <div>
+                <ul className="ul">
                   {Tasks.map(each => (
-                    <li key={each.id}>
-                      <div className="div">
-                        <p className="k">{each.task}</p>
-
-                        <p className="pp bb">{each.tag}</p>
+                    <li key={each.id} className="li">
+                      <div className="taskco">
+                        <h1 className="ppp">
+                          Hi, <span className="sph">{each.name}</span>
+                          <br />
+                          You have a great goal <br />
+                          You just wanted to become
+                          <span className="sph"> {each.goal}</span> <br />
+                          All the best for your future. <br />
+                          <span className="sph m">{each.remainingTime}</span>
+                        </h1>
                       </div>
                     </li>
                   ))}
                 </ul>
-              )}
-            </div>
-          )}
-        </div>
+              </div>
+            )}
+          </div>
+        )}
       </div>
     )
   }
